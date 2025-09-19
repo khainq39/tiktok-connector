@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 // Firebase Admin SDK
-initializeApp({ credential: applicationDefault() });
+initializeApp();
 const db = getFirestore();
 
 let connections = {};
