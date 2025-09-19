@@ -1,48 +1,50 @@
 import express from "express";
 import cors from "cors";
-import TikTokLiveConnection from "tiktok-live-connector";
-import { initializeApp, applicationDefault } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { WebcastPushConnection } from "tiktok-live-connector";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Firebase Admin SDK
-initializeApp();
-const db = getFirestore();
+let connections = {}; // lưu các kết nối đang chạy
 
-let connections = {};
-
-app.get("/", (req, res) => res.send("TikTok Connector running 🚀"));
-
-// API start lấy comment
-app.post("/start", async (req, res) => {
-  const { username } = req.body;
-  if (!username) return res.status(400).send("Thiếu username");
-
-  if (connections[username]) {
-    return res.send(`Đang kết nối tới @${username}`);
-  }
-
-  const tiktok = new TikTokLiveConnection(username);
-
-  tiktok.connect()
-    .then(state => console.log(`✅ Connected to @${username}, roomId=${state.roomId}`))
-    .catch(err => console.error("❌ Connect error:", err));
-
-  tiktok.on("chat", async (data) => {
-    await db.collection("comments").add({
-      tiktok_name: data.uniqueId,
-      comment: data.comment,
-      created_at: new Date().toISOString(),
-      session_id: `live_${username}_${new Date().toISOString().split("T")[0]}`
-    });
-  });
-
-  connections[username] = tiktok;
-  res.send(`Bắt đầu lấy comment từ @${username}`);
+// Endpoint test
+app.get("/", (req, res) => {
+  res.send("✅ TikTok Connector server is running");
 });
 
+// API start lấy comment TikTok
+app.post("/start", async (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).send("❌ Missing username");
+
+  if (connections[username]) {
+    return res.send(`⚡ Already connected to @${username}`);
+  }
+
+  let tiktokLiveConnection = new WebcastPushConnection(username);
+
+  // Thử connect
+  tiktokLiveConnection.connect()
+    .then(state => {
+      console.log(`✅ Connected to @${username}, roomId=${state.roomId}`);
+    })
+    .catch(err => {
+      console.error("❌ Connect error:", err);
+    });
+
+  // Khi có chat
+  tiktokLiveConnection.on("chat", (data) => {
+    console.log(`💬 ${data.uniqueId}: ${data.comment}`);
+    // TODO: Bạn có thể push vào Firebase Firestore ở đây
+  });
+
+  connections[username] = tiktokLiveConnection;
+  res.send(`🚀 Started listening to @${username}`);
+});
+
+// PORT Render cấp qua env
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
