@@ -3,7 +3,7 @@ import cors from "cors";
 import pkg from "tiktok-live-connector";
 import admin from "firebase-admin";
 
-const { TikTokLiveConnection } = pkg;
+const { WebcastPushConnection } = pkg;
 
 const app = express();
 app.use(cors());
@@ -35,7 +35,7 @@ app.post("/start", async (req, res) => {
     return res.send(`⚡ Already connected to @${username}`);
   }
 
-  let tiktokLiveConnection = new TikTokLiveConnection(username);
+  let tiktokLiveConnection = new WebcastPushConnection(username);
 
   tiktokLiveConnection
     .connect()
@@ -46,6 +46,7 @@ app.post("/start", async (req, res) => {
       console.error("❌ Connect error:", err);
     });
 
+  // Khi có chat
   tiktokLiveConnection.on("chat", async (data) => {
     console.log(`💬 ${data.uniqueId}: ${data.comment}`);
     try {
