@@ -37,7 +37,7 @@ app.post("/start", async (req, res) => {
         comment: data.comment,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
         session_id: `live_${username}_${new Date().toISOString().split("T")[0]}`,
-        created_by: uid
+        created_by: userUid
       });
       console.log("✅ Saved to Firestore");
     } catch (err) {
