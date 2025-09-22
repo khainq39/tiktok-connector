@@ -11,7 +11,6 @@ app.use(express.json());
 
 // ===== Firebase Admin init =====
 if (!admin.apps.length) {
-  // Dùng ENV biến SERVICE_ACCOUNT_KEY (Render → Dashboard → Environment)
   const serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_KEY);
 
   admin.initializeApp({
@@ -20,16 +19,14 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
-
-// ===== TikTok connections =====
 let connections = {};
 
-// Endpoint test
+// Test endpoint
 app.get("/", (req, res) => {
   res.send("✅ TikTok Connector server is running");
 });
 
-// Start listening to a TikTok username
+// Start API
 app.post("/start", async (req, res) => {
   const { username } = req.body;
   if (!username) return res.status(400).send("❌ Missing username");
@@ -40,7 +37,6 @@ app.post("/start", async (req, res) => {
 
   let tiktokLiveConnection = new TikTokLiveConnection(username);
 
-  // Connect thử
   tiktokLiveConnection
     .connect()
     .then((state) => {
@@ -50,17 +46,14 @@ app.post("/start", async (req, res) => {
       console.error("❌ Connect error:", err);
     });
 
-  // Khi có chat
   tiktokLiveConnection.on("chat", async (data) => {
     console.log(`💬 ${data.uniqueId}: ${data.comment}`);
-
     try {
       await db.collection("comments").add({
         tiktok_name: data.uniqueId,
         comment: data.comment,
         timestamp: new Date().toISOString(),
       });
-      console.log("✅ Saved comment to Firestore");
     } catch (err) {
       console.error("❌ Firestore error:", err);
     }
@@ -70,7 +63,7 @@ app.post("/start", async (req, res) => {
   res.send(`🚀 Started listening to @${username}`);
 });
 
-// Render PORT
+// Run
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
