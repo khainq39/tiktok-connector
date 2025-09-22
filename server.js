@@ -1,12 +1,25 @@
 import express from "express";
 import cors from "cors";
-import { WebcastPushConnection } from "tiktok-live-connector";
+import { TikTokLiveConnection } from "tiktok-live-connector";
+import admin from "firebase-admin";
+import fs from "fs";
+
+// Init Firebase Admin SDK
+const serviceAccount = JSON.parse(
+  fs.readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, "utf8")
+);
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+const db = admin.firestore();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-let connections = {}; // lưu các kết nối đang chạy
+let connections = {};
 
 // Endpoint test
 app.get("/", (req, res) => {
@@ -22,10 +35,9 @@ app.post("/start", async (req, res) => {
     return res.send(`⚡ Already connected to @${username}`);
   }
 
-  let tiktokLiveConnection = new WebcastPushConnection(username);
+  let tiktokLive = new TikTokLiveConnection(username);
 
-  // Thử connect
-  tiktokLiveConnection.connect()
+  tiktokLive.connect()
     .then(state => {
       console.log(`✅ Connected to @${username}, roomId=${state.roomId}`);
     })
@@ -33,13 +45,18 @@ app.post("/start", async (req, res) => {
       console.error("❌ Connect error:", err);
     });
 
-  // Khi có chat
-  tiktokLiveConnection.on("chat", (data) => {
+  // Khi có chat → ghi vào Firestore
+  tiktokLive.on("chat", async (data) => {
     console.log(`💬 ${data.uniqueId}: ${data.comment}`);
-    // TODO: Bạn có thể push vào Firebase Firestore ở đây
+
+    await db.collection("comments").add({
+      tiktok_name: data.uniqueId,
+      comment: data.comment,
+      timestamp: new Date().toISOString()
+    });
   });
 
-  connections[username] = tiktokLiveConnection;
+  connections[username] = tiktokLive;
   res.send(`🚀 Started listening to @${username}`);
 });
 
