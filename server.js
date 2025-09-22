@@ -31,19 +31,25 @@ app.post("/start", async (req, res) => {
     .catch(err => console.error("❌ Connect error:", err));
 
   conn.on("chat", async (data) => {
-    console.log(`💬 ${data.uniqueId}: ${data.comment}`);
+  console.log(`💬 ${data.uniqueId}: ${data.comment}`);
 
-    const sessionId = `live_${username}_${new Date().toISOString().split("T")[0]}`;
+  const sessionId = `live_${username}_${new Date().toISOString().split("T")[0]}`;
+  const payload = {
+    comment: data.comment,
+    tiktok_name: data.uniqueId,
+    timestamp: new Date(),
+    session_id: sessionId,
+    created_by: uid
+  };
 
-    await db.collection("comments").add({
-      comment: data.comment,
-      tiktok_name: data.uniqueId,
-      timestamp: new Date(),
-      session_id: sessionId,
-      created_by: uid
-    });
-  });
-
+  try {
+    await db.collection("comments").add(payload);
+    console.log("✅ Firestore ghi thành công:", payload);
+  } catch (err) {
+    console.error("❌ Firestore ghi thất bại:", err);
+  }
+});
+  
   connections[username] = conn;
   res.send(`🚀 Started listening to @${username}`);
 });
