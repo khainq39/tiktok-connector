@@ -35,7 +35,7 @@ app.post("/start", async (req, res) => {
     .catch(err => console.error("❌ Connect error:", err));
 
   conn.on("chat", async (data) => {
-    console.log(`💬 ${data.uniqueId}: ${data.comment}`);
+    console.log(`💬 ${data.uniqueId} (${data.nickname}): ${data.comment}`);
 
     const sessionId = `live_${username}_${new Date().toISOString().split("T")[0]}`;
 
@@ -43,8 +43,8 @@ app.post("/start", async (req, res) => {
       await db.collection("comments").add({
         comment: data.comment,
         uniqueId: data.uniqueId,
-        nickname: user.nickname,
-        timestamp: new Date(),
+        nickname: data.nickname, // ✅ fix lỗi
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
         session_id: sessionId,
         created_by: uid,
       });
