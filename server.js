@@ -42,7 +42,8 @@ app.post("/start", async (req, res) => {
     try {
       await db.collection("comments").add({
         comment: data.comment,
-        tiktok_name: data.uniqueId,
+        uniqueId: data.uniqueId,
+        nickname: user.nickname,
         timestamp: new Date(),
         session_id: sessionId,
         created_by: uid,
