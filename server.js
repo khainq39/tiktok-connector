@@ -61,9 +61,14 @@ app.post("/start", async (req, res) => {
   res.send(`🚀 Started listening to @${username}`);
 });
 
-// Mount Viettel Post routes
+// Viettel Post routes
 import viettelRoutes from "./routes/shipping/viettel.js";
 app.use("/api/shipping/viettel", viettelRoutes);
+
+// Root test route
+app.get("/", (req, res) => {
+  res.send("🚀 TikTok Connector API is running!");
+});
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
