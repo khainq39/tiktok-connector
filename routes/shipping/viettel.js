@@ -15,10 +15,10 @@ router.post("/create", shippingController.createOrder);
 // Update vận đơn (cancel, confirm, re-order…)
 router.post("/update", shippingController.updateOrder);
 
-// Tracking đơn hàng
+// Tracking
 router.get("/track/:order_number", shippingController.trackOrder);
 
-// Print label (POST, truyền ORDER_ARRAY)
-router.post("/print", shippingController.printOrder);
+// Print label
+router.get("/print/:order_number", shippingController.printOrder);
 
 export default router;
